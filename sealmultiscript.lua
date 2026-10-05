@@ -1,11 +1,11 @@
 --[[
     SealDev — utility suite
-    Tabs: Instant E | Movement | Aimbot | Teleport | MM2
+    Tabs: Instant E | Movement | Aimbot | Teleport | MM2 | Info
     Made by: SealDev
-    Note: Slate UI is required (loaded via HTTP)
 ]]
 
 local LOGO_ID = "rbxassetid://131261307870420"
+local DISCORD_INVITE = "https://discord.gg/xhn6WaHzs5"
 
 local UI_LIB = "https://raw.githubusercontent.com/PulseZax/Slate/refs/heads/main/.lua"
 local Slate = loadstring(game:HttpGet(UI_LIB), "@Slate")()
@@ -43,6 +43,21 @@ pcall(function()
         stroke.Color = Color3.fromRGB(0, 140, 255)
         stroke.Transparency = 0.5
     end
+end)
+
+-- Discord auto-copy on launch
+pcall(function() setclipboard(DISCORD_INVITE) end)
+
+task.delay(1.5, function()
+    pcall(function()
+        Slate:Notify({
+            Title = "SealDev",
+            Description = "Discord invite copied to clipboard! Paste it in your browser.",
+            Icon = "users",
+            Tone = "Info",
+            Duration = 10,
+        })
+    end)
 end)
 
 task.spawn(function()
@@ -974,6 +989,41 @@ do
                     end
                 end)
             end
+        end,
+    })
+end
+
+local TabInfo = Window:CreateTab({ Name = "Info", Icon = "info" })
+do
+    local sec = TabInfo:CreateSection({ Name = "Community" })
+
+    sec:Button({
+        Name = "Join Discord",
+        Icon = "users",
+        Callback = function()
+            pcall(function() setclipboard(DISCORD_INVITE) end)
+            Slate:Notify({
+                Title = "SealDev",
+                Description = "Discord link copied! Paste in browser.",
+                Icon = "circle-check",
+                Tone = "Success",
+                Duration = 6,
+            })
+        end,
+    })
+
+    sec:Button({
+        Name = "Copy Discord Link",
+        Icon = "copy",
+        Callback = function()
+            pcall(function() setclipboard(DISCORD_INVITE) end)
+            Slate:Notify({
+                Title = "SealDev",
+                Description = "Copied: " .. DISCORD_INVITE,
+                Icon = "circle-check",
+                Tone = "Success",
+                Duration = 6,
+            })
         end,
     })
 end
