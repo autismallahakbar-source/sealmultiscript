@@ -1,23 +1,18 @@
 --[[
-    SealDev — Full Build
+    SealDev — utility suite
     Tabs: Instant E | Movement | Aimbot | Teleport | MM2
-    Logo: rbxassetid://131261307870420
+    Made by: SealDev
+    Note: Slate UI is required (loaded via HTTP)
 ]]
 
-local IMAGE_ID = "rbxassetid://131261307870420"
+local LOGO_ID = "rbxassetid://131261307870420"
 
--- ==========================================================
--- SLATE LOAD
--- ==========================================================
-local SLATE_URL = "https://raw.githubusercontent.com/PulseZax/Slate/refs/heads/main/.lua"
-local Slate = loadstring(game:HttpGet(SLATE_URL), "@Slate")()
+local UI_LIB = "https://raw.githubusercontent.com/PulseZax/Slate/refs/heads/main/.lua"
+local Slate = loadstring(game:HttpGet(UI_LIB), "@Slate")()
 
 pcall(function() Slate.Cleanup() end)
 pcall(function() Slate:PreloadIcons({ "lucide" }) end)
 
--- ==========================================================
--- SERVICES
--- ==========================================================
 local Players           = game:GetService("Players")
 local RunService        = game:GetService("RunService")
 local UserInputService  = game:GetService("UserInputService")
@@ -26,9 +21,6 @@ local Camera            = Workspace.CurrentCamera
 local LocalPlayer       = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- ==========================================================
--- WINDOW
--- ==========================================================
 local Window = Slate:CreateWindow({
     Name = "SealDev",
     Subtitle = "universal utility",
@@ -53,9 +45,6 @@ pcall(function()
     end
 end)
 
--- ==========================================================
--- LOGO
--- ==========================================================
 task.spawn(function()
     local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
     local CoreGui   = game:GetService("CoreGui")
@@ -67,7 +56,7 @@ task.spawn(function()
         if obj:IsA("ImageLabel") then
             local sz = obj.AbsoluteSize
             if sz.X >= 18 and sz.X <= 64 and math.abs(sz.X - sz.Y) < 10 then
-                obj.Image = IMAGE_ID
+                obj.Image = LOGO_ID
                 obj.ImageColor3 = Color3.fromRGB(255, 255, 255)
                 obj.ScaleType = Enum.ScaleType.Fit
                 obj.BackgroundTransparency = 1
@@ -118,7 +107,7 @@ task.spawn(function()
         img.Position = UDim2.new(0, 6, 0.5, 0)
         img.AnchorPoint = Vector2.new(0, 0.5)
         img.BackgroundTransparency = 1
-        img.Image = IMAGE_ID
+        img.Image = LOGO_ID
         img.ScaleType = Enum.ScaleType.Fit
         img.ZIndex = badge.ZIndex + 1
         img.Parent = badge
@@ -157,26 +146,23 @@ task.spawn(function()
     end
 end)
 
--- ==========================================================
--- TAB 1: INSTANT E
--- ==========================================================
 local Tab1 = Window:CreateTab({ Name = "Instant E", Icon = "mouse-pointer-click" })
 
 local ProximityPromptService = game:GetService("ProximityPromptService")
-local originals = setmetatable({}, {__mode = "k"})
+local promptCache = setmetatable({}, {__mode = "k"})
 local connPPS, connDesc = nil, nil
 
 local function patchPrompt(prompt)
-    if originals[prompt] then return end
-    originals[prompt] = prompt.HoldDuration
+    if promptCache[prompt] then return end
+    promptCache[prompt] = prompt.HoldDuration
     prompt.HoldDuration = 0
 end
 
 local function restorePrompt(prompt)
-    local orig = originals[prompt]
+    local orig = promptCache[prompt]
     if orig == nil then return end
     pcall(function() prompt.HoldDuration = orig end)
-    originals[prompt] = nil
+    promptCache[prompt] = nil
 end
 
 local function startInteract()
@@ -193,7 +179,7 @@ end
 local function stopInteract()
     if connPPS  then connPPS:Disconnect();  connPPS  = nil end
     if connDesc then connDesc:Disconnect(); connDesc = nil end
-    for prompt in pairs(originals) do restorePrompt(prompt) end
+    for prompt in pairs(promptCache) do restorePrompt(prompt) end
 end
 
 do
@@ -214,9 +200,6 @@ do
     })
 end
 
--- ==========================================================
--- TAB 2: MOVEMENT
--- ==========================================================
 local Tab2 = Window:CreateTab({ Name = "Movement", Icon = "move-3d" })
 
 local flyEnabled = false
@@ -285,7 +268,7 @@ end
 
 local noclipEnabled = false
 local noclipConn = nil
-local savedCC = {}
+local savedCollide = {}
 
 local function startNoclip()
     if noclipConn then return end
@@ -295,7 +278,7 @@ local function startNoclip()
         if not char then return end
         for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
-                if savedCC[part] == nil then savedCC[part] = part.CanCollide end
+                if savedCollide[part] == nil then savedCollide[part] = part.CanCollide end
                 part.CanCollide = false
             end
         end
@@ -313,7 +296,7 @@ local function stopNoclip()
             end
         end
     end
-    savedCC = {}
+    savedCollide = {}
 end
 
 LocalPlayer.CharacterAdded:Connect(function()
@@ -361,16 +344,13 @@ do
     })
 end
 
--- ==========================================================
--- TAB 3: AIMBOT + ESP
--- ==========================================================
 local Tab3 = Window:CreateTab({ Name = "Aimbot", Icon = "crosshair" })
 
 local isEspActive = false
 local isAimbotEnabled = false
 local fovRadius = 200
 local currentAimbotTarget = nil
-local AIM_PART = "Head" -- всегда целимся в голову
+local AIM_PART = "Head"
 
 local espInstances = {}
 
@@ -676,9 +656,6 @@ do
     })
 end
 
--- ==========================================================
--- TAB 4: TELEPORT
--- ==========================================================
 local Tab4 = Window:CreateTab({ Name = "Teleport", Icon = "navigation" })
 
 local TELEPORT_DISTANCE = 3
@@ -758,12 +735,8 @@ end
 Players.PlayerAdded:Connect(function() task.wait(0.5) refreshPlayerList() end)
 Players.PlayerRemoving:Connect(function() task.wait(0.5) refreshPlayerList() end)
 
--- ==========================================================
--- TAB 5: MM2
--- ==========================================================
 local TabMM2 = Window:CreateTab({ Name = "MM2", Icon = "sword" })
 
--- ==================== ROLE ESP ====================
 local roleEspActive = false
 local roleLoopRunning = false
 local roles = {}
@@ -867,7 +840,6 @@ local function startRoleEspLoop()
     end)
 end
 
--- ==================== FLING ====================
 local FlingTargets = {}
 local FlingActive = false
 local FlingOldPos = nil
@@ -922,7 +894,6 @@ local function FlingOne(TargetPlayer)
     end
 end
 
--- ==================== MM2 UI ====================
 do
     local sec1 = TabMM2:CreateSection({ Name = "Role ESP" })
     sec1:Toggle({
@@ -1007,7 +978,6 @@ do
     })
 end
 
--- ==================== Респавн / отслеживание ====================
 Players.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function()
         task.wait(0.5)
