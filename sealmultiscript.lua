@@ -1,8 +1,3 @@
---[[
-    SealDev — utility suite
-    Tabs: Instant E | Movement | Aimbot | Teleport | MM2 | Info
-    Made by: SealDev
-]]
 
 local LOGO_ID = "rbxassetid://131261307870420"
 local DISCORD_INVITE = "https://discord.gg/xhn6WaHzs5"
@@ -45,7 +40,6 @@ pcall(function()
     end
 end)
 
--- Discord auto-copy on launch
 pcall(function() setclipboard(DISCORD_INVITE) end)
 
 task.delay(1.5, function()
